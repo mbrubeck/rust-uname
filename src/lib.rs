@@ -29,7 +29,8 @@ impl Info {
 
 #[inline]
 fn parse(buf: &[c_char]) -> String {
-    let s = unsafe { CStr::from_ptr(buf.as_ptr()) };
+    let buf: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as *const u8, buf.len()) };
+    let s = CStr::from_bytes_with_nul(buf).unwrap();
     s.to_string_lossy().into_owned()
 }
 
@@ -43,8 +44,6 @@ impl From<utsname> for Info {
             machine: parse(&x.machine[..]),
             _priv: (),
         };
-        // XXX: without this we sometimes segfault on drop
-        std::mem::forget(x);
         info
     }
 }
